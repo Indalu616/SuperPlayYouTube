@@ -9,14 +9,20 @@ SuperPlay AI is a powerful Chrome extension that brings artificial intelligence 
 ### 🤖 Explain This Video
 - **One-click explanations**: Click the "🤖 Explain This Video" button below any YouTube video title
 - **Simple language**: Get complex topics explained "like you're 12"
-- **Beautiful overlay**: Clean, modern floating card design
+- **Beautiful overlay**: Clean, modern floating card design with markdown formatting
 - **Smart insights**: Key takeaways and learning points extracted
 
 ### 📋 Smart Summary + Chapters
-- **Auto-generated summaries**: Instant video content overview
+- **Auto-generated summaries**: Instant video content overview with markdown formatting
 - **Interactive chapters**: Click to jump to specific timestamps
 - **Elegant sidebar**: Seamlessly integrated into YouTube's layout
 - **Time-stamped navigation**: Easy video navigation with AI-generated chapters
+
+### 💬 Follow-up Questions
+- **Conversational AI**: Ask any questions about the video content
+- **Context awareness**: Maintains conversation history and context
+- **Real-time responses**: Instant answers using Google Gemini
+- **Persistent history**: Conversations saved for each video
 
 ## 🛠️ Tech Stack
 
@@ -170,18 +176,23 @@ npm run preview
 
 ## 🌟 Features Roadmap
 
-### Current (v1.0.0)
-- ✅ Basic UI injection
-- ✅ Placeholder AI responses
-- ✅ Modern React components
-- ✅ Chrome Extension architecture
-
-### Recent Updates (v1.1.0)
+### Current Release (v1.0.0)
 - ✅ Real Gemini AI integration
-- ✅ YouTube transcript extraction
+- ✅ YouTube transcript extraction  
 - ✅ Beautiful markdown rendering
+- ✅ Follow-up question conversations
+- ✅ Conversation history storage
 - ✅ Enhanced error handling
 - ✅ API connection testing
+- ✅ Modern React components
+- ✅ Chrome Extension Manifest V3
+
+### Latest Features (v1.0.0)
+- ✅ **Conversational Interface**: Chat with AI about video content
+- ✅ **Context Awareness**: AI remembers previous questions and answers
+- ✅ **Persistent History**: Conversations saved per video
+- ✅ **Markdown Formatting**: Beautiful, readable AI responses
+- ✅ **Real-time Interaction**: Instant follow-up questions and answers
 
 ### Future (v2.0.0)
 - 📝 Custom prompts

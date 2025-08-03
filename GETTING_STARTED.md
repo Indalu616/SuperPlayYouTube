@@ -24,6 +24,7 @@ npm run build
 2. **Look for the button**: You'll see "🤖 Explain This Video" below the video title
 3. **Check the sidebar**: A "📋 Smart Summary" should appear on the right
 4. **Click to test**: Try clicking the explain button to see the floating card
+5. **Ask questions**: Use the follow-up question feature to chat about the video
 
 ### 5. Configure Settings (Required for AI Features)
 1. **Click the extension icon** in your Chrome toolbar
@@ -39,6 +40,7 @@ npm run build
 - Beautiful gradient button below YouTube video titles
 - Hover effects and smooth animations
 - Opens a floating card with video explanation
+- Conversational interface for follow-up questions
 
 ### Smart Summary Sidebar
 - Appears automatically on the right side of videos
