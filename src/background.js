@@ -55,6 +55,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         .catch(error => sendResponse({ success: false, error: error.message }));
       return true;
 
+    case 'ASK_FOLLOW_UP_QUESTION':
+      handleFollowUpQuestion(request.question, request.conversation, request.transcript, request.videoTitle)
+        .then(answer => sendResponse({ success: true, answer }))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
+
     default:
       sendResponse({ success: false, error: 'Unknown message type' });
   }
@@ -173,6 +179,33 @@ async function handleGenerateSummary(transcript, videoTitle = '') {
       throw new Error('Rate limit exceeded. Please try again in a moment.');
     } else {
       throw new Error('Failed to generate summary. Please try again.');
+    }
+  }
+}
+
+// Handle follow-up questions using Gemini AI
+async function handleFollowUpQuestion(question, conversation, transcript, videoTitle = '') {
+  console.log('SuperPlay AI: Handling follow-up question with Gemini');
+  
+  try {
+    // Import Gemini API functions
+    const { answerFollowUpQuestion } = await import('./utils/geminiApi.js');
+    
+    // Generate answer using Gemini with full context
+    const answer = await answerFollowUpQuestion(question, conversation, transcript, videoTitle);
+    
+    return answer;
+    
+  } catch (error) {
+    console.error('SuperPlay AI: Failed to answer follow-up question:', error);
+    
+    // Return user-friendly error message
+    if (error.message.includes('API key')) {
+      throw new Error('Please configure your Gemini API key in the extension settings to use AI features.');
+    } else if (error.message.includes('Rate limit')) {
+      throw new Error('Rate limit exceeded. Please try again in a moment.');
+    } else {
+      throw new Error('Failed to answer question. Please try again.');
     }
   }
 }

@@ -225,6 +225,67 @@ Analyze the content flow and create meaningful chapters that help viewers naviga
 }
 
 /**
+ * Answer follow-up questions about the video using conversation context
+ */
+export async function answerFollowUpQuestion(question, conversation, transcript, videoTitle = '') {
+  const apiKey = await getApiKey();
+  
+  // Build conversation context
+  let conversationContext = '';
+  if (conversation && conversation.length > 0) {
+    conversationContext = conversation.map(msg => {
+      switch (msg.type) {
+        case 'explanation':
+          return `Initial AI Explanation:\n${msg.content}`;
+        case 'question':
+          return `User Question: ${msg.content}`;
+        case 'answer':
+          return `AI Answer: ${msg.content}`;
+        default:
+          return '';
+      }
+    }).filter(Boolean).join('\n\n');
+  }
+
+  const prompt = `You are an expert educator assistant helping users understand a YouTube video. You have already provided an initial explanation, and now the user has a follow-up question.
+
+**Video Title**: ${videoTitle}
+
+**Video Transcript**: 
+${transcript}
+
+**Previous Conversation**:
+${conversationContext}
+
+**User's Follow-up Question**: ${question}
+
+**Instructions**:
+1. Answer the user's specific question based on the video content
+2. Reference the previous conversation context when relevant
+3. Be conversational and helpful
+4. Use markdown formatting for clarity
+5. If the question is not related to the video, politely redirect to video-related topics
+6. Keep your answer focused and concise (2-4 paragraphs maximum)
+
+**Guidelines**:
+- Use a friendly, conversational tone
+- Include relevant examples from the video when applicable
+- If you need clarification, ask for it
+- Use emojis sparingly but appropriately
+- Format code or technical terms with backticks when relevant
+
+Answer the question directly and helpfully:`;
+
+  try {
+    const response = await callGeminiAPI(prompt, apiKey);
+    return response;
+  } catch (error) {
+    console.error('Failed to answer follow-up question:', error);
+    throw error;
+  }
+}
+
+/**
  * Test Gemini API connection
  */
 export async function testGeminiConnection() {
