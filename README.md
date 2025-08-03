@@ -9,20 +9,26 @@ SuperPlay AI is a powerful Chrome extension that brings artificial intelligence 
 ### 🤖 Explain This Video
 - **One-click explanations**: Click the "🤖 Explain This Video" button below any YouTube video title
 - **Simple language**: Get complex topics explained "like you're 12"
-- **Beautiful overlay**: Clean, modern floating card design
+- **Beautiful overlay**: Clean, modern floating card design with markdown formatting
 - **Smart insights**: Key takeaways and learning points extracted
 
 ### 📋 Smart Summary + Chapters
-- **Auto-generated summaries**: Instant video content overview
+- **Auto-generated summaries**: Instant video content overview with markdown formatting
 - **Interactive chapters**: Click to jump to specific timestamps
 - **Elegant sidebar**: Seamlessly integrated into YouTube's layout
 - **Time-stamped navigation**: Easy video navigation with AI-generated chapters
+
+### 💬 Follow-up Questions
+- **Conversational AI**: Ask any questions about the video content
+- **Context awareness**: Maintains conversation history and context
+- **Real-time responses**: Instant answers using Google Gemini
+- **Persistent history**: Conversations saved for each video
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: Vite + React + JavaScript
 - **Styling**: Custom Tailwind-like CSS for modern UI
-- **AI**: OpenAI API (GPT-4/GPT-4o)
+- **AI**: Google Gemini API (Gemini 1.5 Flash)
 - **Platform**: Chrome Extension (Manifest V3)
 - **Architecture**: Content script injection with React components
 
@@ -41,8 +47,8 @@ SuperPlay AI is a powerful Chrome extension that brings artificial intelligence 
    npm install
    ```
 
-3. **Configure OpenAI API Key**
-   - Copy `.env` file and add your OpenAI API key
+3. **Configure Gemini API Key**
+   - Copy `.env` file and add your Gemini API key
    - Or set it later through the extension popup
 
 4. **Build the extension**
@@ -98,14 +104,15 @@ Access settings by clicking the SuperPlay AI icon in your Chrome toolbar:
 
 - **Enable/Disable**: Toggle extension functionality
 - **Auto Summary**: Automatically generate summaries for videos
-- **OpenAI API Key**: Configure your API key for AI features
+- **Gemini API Key**: Configure your API key for AI features
 
 ### API Key Setup
 
-1. Get your OpenAI API key from [platform.openai.com](https://platform.openai.com)
+1. Get your free Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
 2. Open the extension popup
 3. Enter your API key in the settings
-4. Save settings
+4. Test the connection using the "Test Connection" button
+5. Save settings
 
 ## 🎨 UI Features
 
@@ -169,17 +176,23 @@ npm run preview
 
 ## 🌟 Features Roadmap
 
-### Current (v1.0.0)
-- ✅ Basic UI injection
-- ✅ Placeholder AI responses
+### Current Release (v1.0.0)
+- ✅ Real Gemini AI integration
+- ✅ YouTube transcript extraction  
+- ✅ Beautiful markdown rendering
+- ✅ Follow-up question conversations
+- ✅ Conversation history storage
+- ✅ Enhanced error handling
+- ✅ API connection testing
 - ✅ Modern React components
-- ✅ Chrome Extension architecture
+- ✅ Chrome Extension Manifest V3
 
-### Coming Soon (v1.1.0)
-- 🔄 Real OpenAI API integration
-- 🔄 YouTube transcript extraction
-- 🔄 Improved chapter detection
-- 🔄 Multiple language support
+### Latest Features (v1.0.0)
+- ✅ **Conversational Interface**: Chat with AI about video content
+- ✅ **Context Awareness**: AI remembers previous questions and answers
+- ✅ **Persistent History**: Conversations saved per video
+- ✅ **Markdown Formatting**: Beautiful, readable AI responses
+- ✅ **Real-time Interaction**: Instant follow-up questions and answers
 
 ### Future (v2.0.0)
 - 📝 Custom prompts
@@ -209,7 +222,7 @@ MIT License - see LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
-- **OpenAI**: For providing the AI capabilities
+- **Google Gemini**: For providing the AI capabilities
 - **YouTube**: For the platform we enhance
 - **React**: For the component framework
 - **Vite**: For the build tooling

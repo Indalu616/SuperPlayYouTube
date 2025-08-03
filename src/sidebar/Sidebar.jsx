@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const Sidebar = ({ videoId }) => {
   const [summary, setSummary] = useState('');
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadSummaryAndChapters();
@@ -11,25 +14,57 @@ const Sidebar = ({ videoId }) => {
 
   const loadSummaryAndChapters = async () => {
     setLoading(true);
+    setError(null);
     
-    // Simulate API call - replace with actual OpenAI integration later
-    setTimeout(() => {
-      setSummary(
-        "This video covers the main concepts and key points in an easy-to-understand format. " +
-        "The AI-generated summary provides insights into the video's content and helps viewers " +
-        "quickly understand the main topics discussed."
-      );
+    try {
+      // Get video title for context
+      const videoTitle = getVideoTitle();
       
-      setChapters([
-        { title: 'Introduction', timestamp: '0:00', seconds: 0 },
-        { title: 'Main Topic Overview', timestamp: '2:30', seconds: 150 },
-        { title: 'Key Points Discussion', timestamp: '5:45', seconds: 345 },
-        { title: 'Examples & Case Studies', timestamp: '8:20', seconds: 500 },
-        { title: 'Conclusion', timestamp: '12:15', seconds: 735 }
-      ]);
+      // First get the transcript
+      const transcript = await getVideoTranscript(videoId);
       
+      // Then generate summary using Gemini
+      const response = await chrome.runtime.sendMessage({
+        type: 'GENERATE_SUMMARY',
+        transcript: transcript,
+        videoTitle: videoTitle
+      });
+
+      if (response.success) {
+        setSummary(response.summary.summary);
+        setChapters(response.summary.chapters || []);
+      } else {
+        throw new Error(response.error || 'Failed to generate summary');
+      }
+      
+    } catch (error) {
+      console.error('Failed to load summary:', error);
+      setError(error.message);
+      // Set fallback content
+      setSummary('Unable to generate summary. Please check your Gemini API key in settings.');
+      setChapters([]);
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
+  };
+
+  const getVideoTitle = () => {
+    const titleElement = document.querySelector('#title h1.ytd-watch-metadata');
+    return titleElement ? titleElement.textContent.trim() : 'YouTube Video';
+  };
+
+  const getVideoTranscript = async (videoId) => {
+    // Send message to background script to get transcript
+    const response = await chrome.runtime.sendMessage({
+      type: 'GET_VIDEO_TRANSCRIPT',
+      videoId: videoId
+    });
+
+    if (response.success) {
+      return response.transcript;
+    } else {
+      throw new Error('Could not fetch video transcript');
+    }
   };
 
   const seekToTimestamp = (seconds) => {
@@ -143,6 +178,68 @@ const Sidebar = ({ videoId }) => {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+
+        .error-state {
+          text-align: center;
+          padding: 12px;
+        }
+
+        .error-text {
+          color: #f87171;
+          font-size: 12px;
+          display: block;
+          margin-bottom: 8px;
+        }
+
+        .retry-btn {
+          background: #667eea;
+          color: white;
+          border: none;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+
+        .retry-btn:hover {
+          background: #5a6fd8;
+        }
+
+        .summary-markdown {
+          line-height: 1.5;
+        }
+
+        .summary-p {
+          margin: 8px 0;
+          color: #a0a0a0;
+          font-size: 14px;
+        }
+
+        .summary-strong {
+          color: #e0e0e0;
+          font-weight: 600;
+        }
+
+        .summary-em {
+          color: #c0c0c0;
+          font-style: italic;
+        }
+
+        .chapter-description {
+          font-size: 11px;
+          color: #808080;
+          margin-top: 2px;
+          line-height: 1.3;
+        }
+
+        .no-chapters {
+          text-align: center;
+          color: #808080;
+          font-size: 12px;
+          padding: 12px;
+          font-style: italic;
+        }
       `}</style>
 
       <div className="sidebar-header">
@@ -154,10 +251,27 @@ const Sidebar = ({ videoId }) => {
         {loading ? (
           <div className="loading-spinner">
             <div className="spinner"></div>
-            <span>Loading summary...</span>
+            <span>Generating with Gemini AI...</span>
+          </div>
+        ) : error ? (
+          <div className="error-state">
+            <span className="error-text">{error}</span>
+            <button className="retry-btn" onClick={loadSummaryAndChapters}>
+              Retry
+            </button>
           </div>
         ) : (
-          summary
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            className="summary-markdown"
+            components={{
+              p: ({node, ...props}) => <p className="summary-p" {...props} />,
+              strong: ({node, ...props}) => <strong className="summary-strong" {...props} />,
+              em: ({node, ...props}) => <em className="summary-em" {...props} />
+            }}
+          >
+            {summary}
+          </ReactMarkdown>
         )}
       </div>
 
@@ -167,9 +281,13 @@ const Sidebar = ({ videoId }) => {
         {loading ? (
           <div className="loading-spinner">
             <div className="spinner"></div>
-            <span>Loading chapters...</span>
+            <span>Generating chapters...</span>
           </div>
-        ) : (
+        ) : error ? (
+          <div className="error-state">
+            <span className="error-text">Failed to load chapters</span>
+          </div>
+        ) : chapters.length > 0 ? (
           chapters.map((chapter, index) => (
             <div
               key={index}
@@ -178,8 +296,15 @@ const Sidebar = ({ videoId }) => {
             >
               <div className="chapter-title">{chapter.title}</div>
               <div className="chapter-timestamp">{chapter.timestamp}</div>
+              {chapter.description && (
+                <div className="chapter-description">{chapter.description}</div>
+              )}
             </div>
           ))
+        ) : (
+          <div className="no-chapters">
+            No chapters available for this video
+          </div>
         )}
       </div>
     </div>
