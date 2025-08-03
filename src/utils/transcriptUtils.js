@@ -72,7 +72,7 @@ export async function fetchVideoTranscript(videoId) {
 async function tryGetTranscriptFromPlayerResponse(videoId) {
   try {
     // YouTube's internal API endpoint for getting video info
-    const response = await fetch(`https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8`, {
+    const response = await fetch(`https://www.youtube.com/youtubei/v1/player?key=KEY_HERE`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
