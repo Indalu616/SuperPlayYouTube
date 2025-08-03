@@ -242,3 +242,5 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.runtime.onConnect.addListener((port) => {
   console.log('SuperPlay AI: Connected to port:', port.name);
 });
+
+
