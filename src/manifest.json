@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "SuperPlay AI",
+  "version": "1.0.0",
+  "description": "AI-powered YouTube enhancer with smart summaries and explanations",
+  "permissions": [
+    "scripting",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://youtube.com/*",
+    "https://api.openai.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*", "https://youtube.com/*"],
+      "js": ["src/content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "SuperPlay AI",
+    "default_icon": {
+      "16": "public/icons/icon16.svg",
+      "48": "public/icons/icon48.svg",
+      "128": "public/icons/icon128.svg"
+    }
+  },
+  "icons": {
+    "16": "public/icons/icon16.svg",
+    "48": "public/icons/icon48.svg",
+    "128": "public/icons/icon128.svg"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["src/main.jsx", "src/sidebar/*", "src/floatingCard/*"],
+      "matches": ["https://www.youtube.com/*", "https://youtube.com/*"]
+    }
+  ]
+}
