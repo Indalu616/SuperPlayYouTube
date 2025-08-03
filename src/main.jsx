@@ -1,9 +1,10 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App.jsx";
-import "./index.css"; // Assuming you have an index.css for global styles
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import Popup from './popup/Popup.jsx'
+
+// Render the popup component
+const container = document.getElementById('popup-root')
+if (container) {
+  const root = ReactDOM.createRoot(container)
+  root.render(<Popup />)
+}
