@@ -25,9 +25,12 @@ npm run build
 3. **Check the sidebar**: A "📋 Smart Summary" should appear on the right
 4. **Click to test**: Try clicking the explain button to see the floating card
 
-### 5. Configure Settings (Optional)
+### 5. Configure Settings (Required for AI Features)
 1. **Click the extension icon** in your Chrome toolbar
-2. **Add your OpenAI API key** for real AI features (optional - works with placeholders for now)
+2. **Add your Gemini API key** for real AI features
+   - Get your free key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+   - Paste it in the API key field
+   - Click "Test Connection" to verify it works
 3. **Toggle settings** as needed
 
 ## 🎯 What You'll See
@@ -39,8 +42,8 @@ npm run build
 
 ### Smart Summary Sidebar
 - Appears automatically on the right side of videos
-- Shows AI-generated summary (placeholder for now)
-- Interactive chapters with timestamps
+- Shows AI-generated summary with beautiful markdown formatting
+- Interactive chapters with timestamps and descriptions
 - Click chapters to jump to video positions
 
 ### Extension Popup
@@ -77,9 +80,10 @@ npm run build
 
 ### Want to See It in Action?
 1. Go to any YouTube video
-2. The extension will automatically inject UI elements
-3. Look for the explain button and sidebar
-4. Everything works with placeholder data initially
+2. Add your Gemini API key in the popup settings
+3. The extension will automatically inject UI elements
+4. Click the explain button to get real AI-powered explanations
+5. Check the sidebar for auto-generated summaries and chapters
 
 ## 🎨 Customization
 
@@ -87,10 +91,11 @@ The extension uses a modern dark theme that integrates seamlessly with YouTube. 
 
 ## 🔄 Next Steps
 
-1. **Add your OpenAI API key** for real AI-powered features
-2. **Test different videos** to see the UI in action
-3. **Explore the codebase** to understand the architecture
-4. **Customize the prompts** for different explanation styles
+1. **Add your Gemini API key** for real AI-powered features
+2. **Test different videos** to see the AI in action
+3. **Try different video types** (educational, tech talks, tutorials)
+4. **Explore the markdown-formatted responses**
+5. **Customize the prompts** in the code for different explanation styles
 
 ---
 

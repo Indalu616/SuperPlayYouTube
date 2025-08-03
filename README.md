@@ -22,7 +22,7 @@ SuperPlay AI is a powerful Chrome extension that brings artificial intelligence 
 
 - **Frontend**: Vite + React + JavaScript
 - **Styling**: Custom Tailwind-like CSS for modern UI
-- **AI**: OpenAI API (GPT-4/GPT-4o)
+- **AI**: Google Gemini API (Gemini 1.5 Flash)
 - **Platform**: Chrome Extension (Manifest V3)
 - **Architecture**: Content script injection with React components
 
@@ -41,8 +41,8 @@ SuperPlay AI is a powerful Chrome extension that brings artificial intelligence 
    npm install
    ```
 
-3. **Configure OpenAI API Key**
-   - Copy `.env` file and add your OpenAI API key
+3. **Configure Gemini API Key**
+   - Copy `.env` file and add your Gemini API key
    - Or set it later through the extension popup
 
 4. **Build the extension**
@@ -98,14 +98,15 @@ Access settings by clicking the SuperPlay AI icon in your Chrome toolbar:
 
 - **Enable/Disable**: Toggle extension functionality
 - **Auto Summary**: Automatically generate summaries for videos
-- **OpenAI API Key**: Configure your API key for AI features
+- **Gemini API Key**: Configure your API key for AI features
 
 ### API Key Setup
 
-1. Get your OpenAI API key from [platform.openai.com](https://platform.openai.com)
+1. Get your free Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
 2. Open the extension popup
 3. Enter your API key in the settings
-4. Save settings
+4. Test the connection using the "Test Connection" button
+5. Save settings
 
 ## 🎨 UI Features
 
@@ -175,11 +176,12 @@ npm run preview
 - ✅ Modern React components
 - ✅ Chrome Extension architecture
 
-### Coming Soon (v1.1.0)
-- 🔄 Real OpenAI API integration
-- 🔄 YouTube transcript extraction
-- 🔄 Improved chapter detection
-- 🔄 Multiple language support
+### Recent Updates (v1.1.0)
+- ✅ Real Gemini AI integration
+- ✅ YouTube transcript extraction
+- ✅ Beautiful markdown rendering
+- ✅ Enhanced error handling
+- ✅ API connection testing
 
 ### Future (v2.0.0)
 - 📝 Custom prompts
@@ -209,7 +211,7 @@ MIT License - see LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
-- **OpenAI**: For providing the AI capabilities
+- **Google Gemini**: For providing the AI capabilities
 - **YouTube**: For the platform we enhance
 - **React**: For the component framework
 - **Vite**: For the build tooling

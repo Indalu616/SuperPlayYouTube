@@ -4,11 +4,13 @@ const Popup = () => {
   const [settings, setSettings] = useState({
     enabled: true,
     autoSummary: true,
-    apiKey: ''
+    geminiApiKey: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   useEffect(() => {
     loadSettings();
@@ -54,6 +56,36 @@ const Popup = () => {
 
   const openYouTube = () => {
     chrome.tabs.create({ url: 'https://www.youtube.com' });
+  };
+
+  const testApiConnection = async () => {
+    setTesting(true);
+    setTestResult(null);
+    
+    try {
+      // Save settings first
+      await saveSettings();
+      
+      // Test connection
+      const response = await chrome.runtime.sendMessage({ type: 'TEST_GEMINI_CONNECTION' });
+      
+      if (response.success) {
+        setTestResult({ success: true, message: 'Connection successful! 🎉' });
+      } else {
+        setTestResult({ success: false, message: response.error || 'Connection failed' });
+      }
+    } catch (error) {
+      setTestResult({ success: false, message: error.message || 'Connection test failed' });
+    } finally {
+      setTesting(false);
+      
+      // Clear test result after 3 seconds
+      setTimeout(() => setTestResult(null), 3000);
+    }
+  };
+
+  const isValidGeminiKey = (key) => {
+    return key && key.length >= 35 && key.startsWith('AIza');
   };
 
   if (loading) {
@@ -195,6 +227,14 @@ const Popup = () => {
           border-color: #667eea;
         }
 
+        .api-key-input.valid {
+          border-color: #4ade80;
+        }
+
+        .api-key-input.invalid {
+          border-color: #f87171;
+        }
+
         .api-key-toggle {
           position: absolute;
           right: 12px;
@@ -293,6 +333,71 @@ const Popup = () => {
           font-size: 11px;
           color: #a0a0a0;
         }
+
+        .api-key-actions {
+          margin-top: 8px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .test-button {
+          background: #4ade80;
+          color: white;
+          border: none;
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .test-button:hover:not(:disabled) {
+          background: #22c55e;
+        }
+
+        .test-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .test-result {
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 500;
+        }
+
+        .test-result.success {
+          background: rgba(74, 222, 128, 0.2);
+          color: #4ade80;
+          border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .test-result.error {
+          background: rgba(248, 113, 113, 0.2);
+          color: #f87171;
+          border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+
+        .api-key-help {
+          margin-top: 8px;
+        }
+
+        .api-key-help small {
+          color: #a0a0a0;
+          font-size: 11px;
+        }
+
+        .help-link {
+          color: #667eea;
+          text-decoration: none;
+        }
+
+        .help-link:hover {
+          text-decoration: underline;
+        }
       `}</style>
 
       <div className="header">
@@ -341,17 +446,17 @@ const Popup = () => {
         </div>
 
         <div className="setting-group">
-          <label className="setting-label">OpenAI API Key</label>
+          <label className="setting-label">Gemini API Key</label>
           <div className="setting-description">
-            Add your OpenAI API key for AI-powered features
+            Add your Google Gemini API key for AI-powered features
           </div>
           <div className="api-key-container">
             <input
               type={showApiKey ? 'text' : 'password'}
-              className="api-key-input"
-              placeholder="sk-..."
-              value={settings.apiKey}
-              onChange={(e) => handleSettingChange('apiKey', e.target.value)}
+              className={`api-key-input ${isValidGeminiKey(settings.geminiApiKey) ? 'valid' : settings.geminiApiKey ? 'invalid' : ''}`}
+              placeholder="AIza..."
+              value={settings.geminiApiKey}
+              onChange={(e) => handleSettingChange('geminiApiKey', e.target.value)}
             />
             <button
               className="api-key-toggle"
@@ -359,6 +464,38 @@ const Popup = () => {
             >
               {showApiKey ? '👁️' : '👁️‍🗨️'}
             </button>
+          </div>
+          
+          {settings.geminiApiKey && (
+            <div className="api-key-actions">
+              <button
+                className="test-button"
+                onClick={testApiConnection}
+                disabled={testing || !isValidGeminiKey(settings.geminiApiKey)}
+              >
+                {testing ? 'Testing...' : 'Test Connection'}
+              </button>
+              
+              {testResult && (
+                <div className={`test-result ${testResult.success ? 'success' : 'error'}`}>
+                  {testResult.message}
+                </div>
+              )}
+            </div>
+          )}
+          
+          <div className="api-key-help">
+            <small>
+              Get your free API key from{' '}
+              <a 
+                href="https://aistudio.google.com/app/apikey" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="help-link"
+              >
+                Google AI Studio
+              </a>
+            </small>
           </div>
         </div>
 
