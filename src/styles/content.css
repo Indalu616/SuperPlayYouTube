@@ -1,0 +1,125 @@
+/* SuperPlay AI - Content Script Styles */
+
+/* Button Injection Styles */
+.superplay-explain-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin: 12px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: "YouTube Sans", "Roboto", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  user-select: none;
+  z-index: 10000;
+}
+
+.superplay-explain-button:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+}
+
+.superplay-explain-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.superplay-explain-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.superplay-button-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Sidebar Container */
+.superplay-sidebar-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 380px;
+  max-height: calc(100vh - 120px);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  z-index: 10001;
+  overflow: hidden;
+  border: 1px solid #e1e5e9;
+  font-family: "YouTube Sans", "Roboto", sans-serif;
+}
+
+/* Floating Card Container */
+.superplay-floating-card {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90vw;
+  max-width: 800px;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  z-index: 10002;
+  overflow: hidden;
+  border: 1px solid #e1e5e9;
+  font-family: "YouTube Sans", "Roboto", sans-serif;
+}
+
+/* Overlay */
+.superplay-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 10001;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .superplay-sidebar-container,
+  .superplay-floating-card {
+    background: #1a1a1a;
+    border-color: #333;
+    color: #ffffff;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .superplay-sidebar-container {
+    width: 320px;
+    right: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .superplay-sidebar-container {
+    width: calc(100vw - 20px);
+    right: 10px;
+    left: 10px;
+  }
+  
+  .superplay-floating-card {
+    width: calc(100vw - 20px);
+    height: calc(100vh - 20px);
+    max-width: none;
+    max-height: none;
+    border-radius: 12px;
+  }
+}

@@ -1,6 +1,13 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * SuperPlay AI - Popup Component
+ * Settings and configuration interface
+ */
 
-const Popup = () => {
+import React, { useState, useEffect } from 'react';
+import { MessageTypes } from '../utils/constants.js';
+import '../styles/popup.css';
+
+export default function Popup() {
   const [settings, setSettings] = useState({
     enabled: true,
     autoSummary: true,
@@ -18,13 +25,14 @@ const Popup = () => {
 
   const loadSettings = async () => {
     try {
-      const response = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
-      if (response.success) {
-        setSettings(response.settings);
-      }
+      chrome.runtime.sendMessage({ type: MessageTypes.GET_SETTINGS }, (response) => {
+        if (response && response.success) {
+          setSettings(response.settings);
+        }
+        setLoading(false);
+      });
     } catch (error) {
       console.error('Failed to load settings:', error);
-    } finally {
       setLoading(false);
     }
   };
@@ -32,15 +40,17 @@ const Popup = () => {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      const response = await chrome.runtime.sendMessage({
-        type: 'UPDATE_SETTINGS',
+      chrome.runtime.sendMessage({
+        type: MessageTypes.UPDATE_SETTINGS,
         settings
+      }, (response) => {
+        if (response && response.success) {
+          console.log('Settings saved successfully');
+        } else {
+          console.error('Failed to save settings:', response?.error);
+        }
+        setSaving(false);
       });
-      
-      if (response.success) {
-        // Show success feedback
-        setTimeout(() => setSaving(false), 500);
-      }
     } catch (error) {
       console.error('Failed to save settings:', error);
       setSaving(false);
@@ -48,475 +58,222 @@ const Popup = () => {
   };
 
   const handleSettingChange = (key, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    setSettings(prev => ({ ...prev, [key]: value }));
+    setTestResult(null);
+  };
+
+  const testApiConnection = async () => {
+    if (!settings.geminiApiKey.trim()) {
+      setTestResult({ success: false, message: 'Please enter an API key first' });
+      return;
+    }
+
+    setTesting(true);
+    setTestResult(null);
+
+    // Save settings first
+    await saveSettings();
+
+    chrome.runtime.sendMessage({ type: MessageTypes.TEST_GEMINI_CONNECTION }, (response) => {
+      if (response) {
+        setTestResult(response);
+      } else {
+        setTestResult({ success: false, message: 'Failed to test connection' });
+      }
+      setTesting(false);
+    });
   };
 
   const openYouTube = () => {
     chrome.tabs.create({ url: 'https://www.youtube.com' });
   };
 
-  const testApiConnection = async () => {
-    setTesting(true);
-    setTestResult(null);
-    
-    try {
-      // Save settings first
-      await saveSettings();
-      
-      // Test connection
-      const response = await chrome.runtime.sendMessage({ type: 'TEST_GEMINI_CONNECTION' });
-      
-      if (response.success) {
-        setTestResult({ success: true, message: 'Connection successful! 🎉' });
-      } else {
-        setTestResult({ success: false, message: response.error || 'Connection failed' });
-      }
-    } catch (error) {
-      setTestResult({ success: false, message: error.message || 'Connection test failed' });
-    } finally {
-      setTesting(false);
-      
-      // Clear test result after 3 seconds
-      setTimeout(() => setTestResult(null), 3000);
-    }
-  };
-
   const isValidGeminiKey = (key) => {
-    return key && key.length >= 35 && key.startsWith('AIza');
+    return key && key.startsWith('AIza') && key.length >= 35;
   };
 
   if (loading) {
     return (
       <div className="popup-container">
-        <style jsx>{`
-          .popup-container {
-            width: 350px;
-            height: 400px;
-            background: #0f0f23;
-            color: white;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          .loading-spinner {
-            border: 3px solid #667eea;
-            border-top: 3px solid transparent;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-          }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-        <div className="loading-spinner"></div>
+        <div className="popup-header">
+          <h1 className="popup-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            SuperPlay AI
+          </h1>
+        </div>
+        <div className="popup-content">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p className="loading-text">Loading settings...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="popup-container">
-      <style jsx>{`
-        .popup-container {
-          width: 350px;
-          min-height: 450px;
-          background: #0f0f23;
-          color: white;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          padding: 0;
-          margin: 0;
-        }
-
-        .header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 20px;
-          text-align: center;
-        }
-
-        .logo {
-          font-size: 24px;
-          font-weight: 700;
-          margin-bottom: 4px;
-        }
-
-        .tagline {
-          font-size: 12px;
-          opacity: 0.9;
-        }
-
-        .content {
-          padding: 20px;
-        }
-
-        .setting-group {
-          margin-bottom: 20px;
-        }
-
-        .setting-label {
-          font-size: 14px;
-          font-weight: 600;
-          margin-bottom: 8px;
-          display: block;
-          color: #e0e0e0;
-        }
-
-        .setting-description {
-          font-size: 12px;
-          color: #a0a0a0;
-          margin-bottom: 8px;
-        }
-
-        .toggle-container {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .toggle-switch {
-          position: relative;
-          width: 44px;
-          height: 24px;
-          background: #2a2a3e;
-          border-radius: 12px;
-          cursor: pointer;
-          transition: background 0.3s ease;
-        }
-
-        .toggle-switch.active {
-          background: #667eea;
-        }
-
-        .toggle-slider {
-          position: absolute;
-          top: 2px;
-          left: 2px;
-          width: 20px;
-          height: 20px;
-          background: white;
-          border-radius: 50%;
-          transition: transform 0.3s ease;
-        }
-
-        .toggle-switch.active .toggle-slider {
-          transform: translateX(20px);
-        }
-
-        .api-key-container {
-          position: relative;
-        }
-
-        .api-key-input {
-          width: 100%;
-          padding: 10px 40px 10px 12px;
-          background: #1a1a2e;
-          border: 1px solid #2a2a3e;
-          border-radius: 8px;
-          color: white;
-          font-size: 14px;
-          box-sizing: border-box;
-        }
-
-        .api-key-input:focus {
-          outline: none;
-          border-color: #667eea;
-        }
-
-        .api-key-input.valid {
-          border-color: #4ade80;
-        }
-
-        .api-key-input.invalid {
-          border-color: #f87171;
-        }
-
-        .api-key-toggle {
-          position: absolute;
-          right: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          background: none;
-          border: none;
-          color: #a0a0a0;
-          cursor: pointer;
-          font-size: 14px;
-        }
-
-        .api-key-toggle:hover {
-          color: #667eea;
-        }
-
-        .save-button {
-          width: 100%;
-          padding: 12px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border: none;
-          border-radius: 8px;
-          color: white;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          margin-bottom: 12px;
-        }
-
-        .save-button:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .save-button:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .youtube-button {
-          width: 100%;
-          padding: 10px;
-          background: #ff0000;
-          border: none;
-          border-radius: 8px;
-          color: white;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .youtube-button:hover {
-          background: #cc0000;
-        }
-
-        .status-indicator {
-          display: flex;
-          align-items: center;
-          margin-bottom: 16px;
-          padding: 8px 12px;
-          background: #16213e;
-          border-radius: 6px;
-          font-size: 12px;
-        }
-
-        .status-indicator.active {
-          color: #4ade80;
-        }
-
-        .status-indicator.inactive {
-          color: #f87171;
-        }
-
-        .status-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          margin-right: 8px;
-        }
-
-        .status-indicator.active .status-dot {
-          background: #4ade80;
-        }
-
-        .status-indicator.inactive .status-dot {
-          background: #f87171;
-        }
-
-        .footer {
-          text-align: center;
-          padding: 16px 20px;
-          border-top: 1px solid #2a2a3e;
-          font-size: 11px;
-          color: #a0a0a0;
-        }
-
-        .api-key-actions {
-          margin-top: 8px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .test-button {
-          background: #4ade80;
-          color: white;
-          border: none;
-          padding: 6px 12px;
-          border-radius: 6px;
-          font-size: 12px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .test-button:hover:not(:disabled) {
-          background: #22c55e;
-        }
-
-        .test-button:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .test-result {
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 11px;
-          font-weight: 500;
-        }
-
-        .test-result.success {
-          background: rgba(74, 222, 128, 0.2);
-          color: #4ade80;
-          border: 1px solid rgba(74, 222, 128, 0.3);
-        }
-
-        .test-result.error {
-          background: rgba(248, 113, 113, 0.2);
-          color: #f87171;
-          border: 1px solid rgba(248, 113, 113, 0.3);
-        }
-
-        .api-key-help {
-          margin-top: 8px;
-        }
-
-        .api-key-help small {
-          color: #a0a0a0;
-          font-size: 11px;
-        }
-
-        .help-link {
-          color: #667eea;
-          text-decoration: none;
-        }
-
-        .help-link:hover {
-          text-decoration: underline;
-        }
-      `}</style>
-
-      <div className="header">
-        <div className="logo">🚀 SuperPlay AI</div>
-        <div className="tagline">Enhance YouTube with AI</div>
+      <div className="popup-header">
+        <h1 className="popup-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          SuperPlay AI
+        </h1>
+        <p className="popup-subtitle">AI-powered YouTube enhancer</p>
       </div>
 
-      <div className="content">
-        <div className={`status-indicator ${settings.enabled ? 'active' : 'inactive'}`}>
-          <div className="status-dot"></div>
-          {settings.enabled ? 'Extension Active' : 'Extension Disabled'}
-        </div>
+      <div className="popup-content">
+        {/* Extension Settings */}
+        <div className="settings-section">
+          <div className="section-header">
+            <svg className="section-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+            </svg>
+            <h2 className="section-title">Extension Settings</h2>
+          </div>
 
-        <div className="setting-group">
           <div className="toggle-container">
-            <div>
-              <label className="setting-label">Enable SuperPlay AI</label>
-              <div className="setting-description">
-                Turn on/off the extension functionality
-              </div>
+            <div className="toggle-info">
+              <h3 className="toggle-label">Enable Extension</h3>
+              <p className="toggle-description">Turn SuperPlay AI on or off</p>
             </div>
-            <div
-              className={`toggle-switch ${settings.enabled ? 'active' : ''}`}
-              onClick={() => handleSettingChange('enabled', !settings.enabled)}
-            >
-              <div className="toggle-slider"></div>
-            </div>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                className="toggle-input"
+                checked={settings.enabled}
+                onChange={(e) => handleSettingChange('enabled', e.target.checked)}
+              />
+              <span className="toggle-slider"></span>
+            </label>
           </div>
-        </div>
 
-        <div className="setting-group">
           <div className="toggle-container">
-            <div>
-              <label className="setting-label">Auto Summary</label>
-              <div className="setting-description">
-                Automatically generate summaries when loading videos
-              </div>
+            <div className="toggle-info">
+              <h3 className="toggle-label">Auto-Generate Summary</h3>
+              <p className="toggle-description">Automatically show summary sidebar when watching videos</p>
             </div>
-            <div
-              className={`toggle-switch ${settings.autoSummary ? 'active' : ''}`}
-              onClick={() => handleSettingChange('autoSummary', !settings.autoSummary)}
-            >
-              <div className="toggle-slider"></div>
-            </div>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                className="toggle-input"
+                checked={settings.autoSummary}
+                onChange={(e) => handleSettingChange('autoSummary', e.target.checked)}
+              />
+              <span className="toggle-slider"></span>
+            </label>
           </div>
         </div>
 
-        <div className="setting-group">
-          <label className="setting-label">Gemini API Key</label>
-          <div className="setting-description">
-            Add your Google Gemini API key for AI-powered features
+        {/* API Configuration */}
+        <div className="settings-section">
+          <div className="section-header">
+            <svg className="section-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.6 14.8,10V11.5C15.4,11.5 16,12.4 16,13V17C16,18.4 15.6,19 14.2,19H9.8C8.4,19 8,18.4 8,17V13C8,12.4 8.4,11.5 9,11.5V10C9,8.6 10.6,7 12,7M12,8.2C11.2,8.2 10.2,8.7 10.2,10V11.5H13.8V10C13.8,8.7 12.8,8.2 12,8.2Z"/>
+            </svg>
+            <h2 className="section-title">API Configuration</h2>
           </div>
+
           <div className="api-key-container">
-            <input
-              type={showApiKey ? 'text' : 'password'}
-              className={`api-key-input ${isValidGeminiKey(settings.geminiApiKey) ? 'valid' : settings.geminiApiKey ? 'invalid' : ''}`}
-              placeholder="AIza..."
-              value={settings.geminiApiKey}
-              onChange={(e) => handleSettingChange('geminiApiKey', e.target.value)}
-            />
-            <button
-              className="api-key-toggle"
-              onClick={() => setShowApiKey(!showApiKey)}
-            >
-              {showApiKey ? '👁️' : '👁️‍🗨️'}
-            </button>
-          </div>
-          
-          {settings.geminiApiKey && (
-            <div className="api-key-actions">
-              <button
-                className="test-button"
-                onClick={testApiConnection}
-                disabled={testing || !isValidGeminiKey(settings.geminiApiKey)}
-              >
-                {testing ? 'Testing...' : 'Test Connection'}
-              </button>
-              
-              {testResult && (
-                <div className={`test-result ${testResult.success ? 'success' : 'error'}`}>
-                  {testResult.message}
+            <div className="input-group">
+              <label className="input-label">Google Gemini API Key</label>
+              <div className="input-wrapper">
+                <input
+                  type={showApiKey ? 'text' : 'password'}
+                  className={`api-key-input ${
+                    settings.geminiApiKey ? 
+                      (isValidGeminiKey(settings.geminiApiKey) ? 'valid' : 'invalid') : 
+                      ''
+                  }`}
+                  placeholder="AIza..."
+                  value={settings.geminiApiKey}
+                  onChange={(e) => handleSettingChange('geminiApiKey', e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="toggle-visibility-btn"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  title={showApiKey ? 'Hide API key' : 'Show API key'}
+                >
+                  {showApiKey ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+              <p className="input-help">
+                Get your free API key from{' '}
+                <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer">
+                  Google AI Studio
+                </a>
+              </p>
+              {settings.geminiApiKey && !isValidGeminiKey(settings.geminiApiKey) && (
+                <div className="validation-message error">
+                  <svg className="validation-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                  </svg>
+                  Invalid API key format
+                </div>
+              )}
+              {settings.geminiApiKey && isValidGeminiKey(settings.geminiApiKey) && (
+                <div className="validation-message success">
+                  <svg className="validation-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z"/>
+                  </svg>
+                  Valid API key format
                 </div>
               )}
             </div>
-          )}
-          
-          <div className="api-key-help">
-            <small>
-              Get your free API key from{' '}
-              <a 
-                href="https://aistudio.google.com/app/apikey" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="help-link"
+
+            <div className="action-buttons">
+              <button
+                className="btn btn-primary"
+                onClick={testApiConnection}
+                disabled={testing || !settings.geminiApiKey.trim()}
               >
-                Google AI Studio
-              </a>
-            </small>
+                {testing ? <div className="loading-spinner"></div> : 
+                  <svg className="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/>
+                  </svg>
+                }
+                Test Connection
+              </button>
+              
+              <button
+                className="btn btn-secondary"
+                onClick={openYouTube}
+              >
+                <svg className="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M10,15L15.19,12L10,9V15M21.56,7.17C21.69,7.64 21.78,8.27 21.84,9.07C21.91,9.87 21.94,10.56 21.94,11.16L22,12C22,14.19 21.84,15.8 21.56,16.83C21.31,17.73 20.73,18.31 19.83,18.56C19.36,18.69 18.5,18.78 17.18,18.84C15.88,18.91 14.69,18.94 13.59,18.94L12,19C7.81,19 5.2,18.84 4.17,18.56C3.27,18.31 2.69,17.73 2.44,16.83C2.31,16.36 2.22,15.73 2.16,14.93C2.09,14.13 2.06,13.44 2.06,12.84L2,12C2,9.81 2.16,8.2 2.44,7.17C2.69,6.27 3.27,5.69 4.17,5.44C4.64,5.31 5.5,5.22 6.82,5.16C8.12,5.09 9.31,5.06 10.41,5.06L12,5C16.19,5 18.8,5.16 19.83,5.44C20.73,5.69 21.31,6.27 21.56,7.17Z"/>
+                </svg>
+                Open YouTube
+              </button>
+            </div>
+
+            {testResult && (
+              <div className={`test-result ${testResult.success ? 'success' : 'error'}`}>
+                <svg className="test-result-icon" viewBox="0 0 24 24" fill="currentColor">
+                  {testResult.success ? (
+                    <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z"/>
+                  ) : (
+                    <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                  )}
+                </svg>
+                {testResult.message}
+              </div>
+            )}
           </div>
         </div>
-
-        <button
-          className="save-button"
-          onClick={saveSettings}
-          disabled={saving}
-        >
-          {saving ? 'Saving...' : 'Save Settings'}
-        </button>
-
-        <button className="youtube-button" onClick={openYouTube}>
-          📺 Open YouTube
-        </button>
       </div>
 
-      <div className="footer">
-        SuperPlay AI v1.0.0 - Enhance your YouTube experience
+      <div className="popup-footer">
+        <p className="footer-text">
+          Made with ❤️ for YouTube enthusiasts |{' '}
+          <a href="https://github.com" className="footer-link" target="_blank" rel="noopener noreferrer">
+            View on GitHub
+          </a>
+        </p>
       </div>
     </div>
   );
-};
-
-export default Popup;
+}

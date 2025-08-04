@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SuperPlay AI",
-  "version": "1.0.0",
-  "description": "AI-powered YouTube enhancer with smart summaries and explanations",
+  "version": "1.1.0",
+  "description": "AI-powered YouTube enhancer with smart summaries, explanations, and follow-up questions",
   "permissions": [
     "scripting",
     "activeTab",
@@ -15,18 +15,20 @@
     "https://*.googlevideo.com/*"
   ],
   "background": {
-    "service_worker": "src/background.js"
+    "service_worker": "src/services/background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["https://www.youtube.com/*", "https://youtube.com/*"],
-      "js": ["src/content.js"],
+      "js": ["src/content/content.js"],
+      "css": ["src/styles/content.css"],
       "run_at": "document_end"
     }
   ],
   "action": {
     "default_popup": "src/popup/popup.html",
-    "default_title": "SuperPlay AI",
+    "default_title": "SuperPlay AI Settings",
     "default_icon": {
       "16": "public/icons/icon16.svg",
       "48": "public/icons/icon48.svg",
@@ -40,7 +42,11 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["src/main.jsx", "src/sidebar/*", "src/floatingCard/*"],
+      "resources": [
+        "src/components/*",
+        "src/styles/*",
+        "assets/*"
+      ],
       "matches": ["https://www.youtube.com/*", "https://youtube.com/*"]
     }
   ]
