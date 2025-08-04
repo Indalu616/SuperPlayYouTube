@@ -43,6 +43,9 @@ class ContentScript {
         return;
       }
 
+      // Inject CSS stylesheets
+      this.injectCSS();
+
       // Setup message listeners
       this.setupMessageListeners();
 
@@ -59,6 +62,33 @@ class ContentScript {
 
     } catch (error) {
       console.error('SuperPlay AI: Content script setup failed:', error);
+    }
+  }
+
+  injectCSS() {
+    try {
+      const cssFiles = [
+        'src/styles/content.css',
+        'src/styles/sidebar.css', 
+        'src/styles/explain-card.css',
+        'src/styles/popup.css'
+      ];
+
+      cssFiles.forEach(cssFile => {
+        // Check if already injected
+        if (document.querySelector(`link[href*="${cssFile}"]`)) {
+          return;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = chrome.runtime.getURL(cssFile);
+        document.head.appendChild(link);
+        console.log('SuperPlay AI: Injected CSS:', cssFile);
+      });
+    } catch (error) {
+      console.error('SuperPlay AI: Failed to inject CSS:', error);
     }
   }
 
