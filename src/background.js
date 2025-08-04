@@ -621,4 +621,12 @@ Please provide a helpful, accurate answer based on the video content. Guidelines
   return await callGeminiAPI(prompt, apiKey);
 }
 
+
 console.log('SuperPlay AI: Background service worker ready');
+// Keep service worker alive
+chrome.runtime.onConnect.addListener((port) => {
+  console.log('SuperPlay AI: Connected to port:', port.name);
+});
+
+
+
