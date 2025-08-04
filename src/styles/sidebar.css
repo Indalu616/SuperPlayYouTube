@@ -1,0 +1,262 @@
+/* SuperPlay AI - Sidebar Component Styles */
+
+.sidebar-header {
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: relative;
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-subtitle {
+  font-size: 13px;
+  opacity: 0.9;
+  margin: 4px 0 0 0;
+}
+
+.sidebar-content {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+}
+
+.sidebar-section {
+  margin-bottom: 24px;
+}
+
+.sidebar-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Summary Styles */
+.summary-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.summary-content p {
+  margin: 0 0 12px 0;
+}
+
+.summary-content p:last-child {
+  margin-bottom: 0;
+}
+
+.summary-content ul, .summary-content ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.summary-content li {
+  margin: 4px 0;
+}
+
+.summary-content strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* Chapters Styles */
+.chapters-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.chapter-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid #e9ecef;
+}
+
+.chapter-item:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chapter-item:active {
+  transform: translateY(0);
+}
+
+.chapter-content {
+  padding: 12px 16px;
+}
+
+.chapter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.chapter-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.chapter-timestamp {
+  background: #667eea;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.chapter-description {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Loading States */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+/* Error States */
+.error-container {
+  padding: 20px;
+  text-align: center;
+}
+
+.error-message {
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  padding: 16px;
+  color: #c33;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.error-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: #666;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-text {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .section-title {
+    color: #ffffff;
+  }
+
+  .summary-content {
+    color: #e0e0e0;
+  }
+
+  .summary-content strong {
+    color: #ffffff;
+  }
+
+  .chapter-item {
+    background: #2a2a2a;
+    border-color: #404040;
+  }
+
+  .chapter-item:hover {
+    background: #333333;
+  }
+
+  .chapter-title {
+    color: #ffffff;
+  }
+
+  .chapter-description {
+    color: #b0b0b0;
+  }
+
+  .loading-text {
+    color: #b0b0b0;
+  }
+
+  .empty-state {
+    color: #b0b0b0;
+  }
+
+  .error-message {
+    background: #2a1a1a;
+    border-color: #4a2a2a;
+    color: #ff6b6b;
+  }
+}
