@@ -93,12 +93,13 @@ export class YouTubeService {
 
       console.log('SuperPlay AI: Fetching transcript for video:', videoId);
 
-      // Try multiple methods in order
+      // Try multiple methods in order of reliability
       const methods = [
-        () => this.fetchFromPlayerAPI(videoId),
+        () => this.fetchFromPageData(videoId),
         () => this.fetchFromCaptionTracks(videoId),
         () => this.fetchFromVisibleCaptions(),
-        () => this.fetchFromDescription()
+        () => this.fetchFromDescription(),
+        () => this.fetchFromPlayerAPI(videoId) // Last resort due to CORS
       ];
 
       for (const method of methods) {
@@ -127,33 +128,119 @@ export class YouTubeService {
   }
 
   /**
-   * Fetch transcript from YouTube's internal player API
+   * Fetch transcript from YouTube's page data objects
    */
-  async fetchFromPlayerAPI(videoId) {
+  async fetchFromPageData(videoId) {
     try {
-      const apiUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en&fmt=srv3`;
+      console.log('SuperPlay AI: Trying to extract from page data...');
       
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/xml, text/xml, */*',
+      // Wait for page data to load
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Look for ytInitialPlayerResponse or similar objects
+      const scripts = document.querySelectorAll('script');
+      let playerData = null;
+      
+      for (const script of scripts) {
+        const content = script.textContent || '';
+        
+        // Look for ytInitialPlayerResponse
+        if (content.includes('ytInitialPlayerResponse')) {
+          const match = content.match(/var ytInitialPlayerResponse = ({.+?});/);
+          if (match) {
+            try {
+              playerData = JSON.parse(match[1]);
+              break;
+            } catch (e) {
+              continue;
+            }
+          }
         }
-      });
-
-      if (!response.ok) {
-        throw new Error(`API response not ok: ${response.status}`);
+        
+        // Look for window.ytplayer
+        if (content.includes('ytplayer.config')) {
+          const match = content.match(/ytplayer\.config\s*=\s*({.+?});/);
+          if (match) {
+            try {
+              const config = JSON.parse(match[1]);
+              if (config.args && config.args.player_response) {
+                playerData = JSON.parse(config.args.player_response);
+                break;
+              }
+            } catch (e) {
+              continue;
+            }
+          }
+        }
       }
-
+      
+      if (!playerData) {
+        // Try to get from window objects
+        if (typeof window !== 'undefined') {
+          playerData = window.ytInitialPlayerResponse || 
+                      (window.ytplayer && window.ytplayer.config && window.ytplayer.config.args && 
+                       JSON.parse(window.ytplayer.config.args.player_response));
+        }
+      }
+      
+      if (!playerData) {
+        throw new Error('No player data found');
+      }
+      
+      // Extract caption tracks from player data
+      const captions = playerData.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+      
+      if (!captions || !captions.length) {
+        throw new Error('No caption tracks in player data');
+      }
+      
+      // Find English captions
+      let captionTrack = captions.find(track => 
+        track.languageCode === 'en' || 
+        track.languageCode === 'en-US' ||
+        track.languageCode === 'en-GB'
+      );
+      
+      if (!captionTrack) {
+        captionTrack = captions[0]; // Use first available
+      }
+      
+      if (!captionTrack.baseUrl) {
+        throw new Error('No caption URL in track data');
+      }
+      
+      let captionUrl = captionTrack.baseUrl;
+      
+      // Ensure we get the right format
+      if (!captionUrl.includes('fmt=')) {
+        captionUrl += '&fmt=srv3';
+      }
+      
+      console.log('SuperPlay AI: Fetching from player data caption URL...');
+      
+      const response = await fetch(captionUrl, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'same-origin'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Caption fetch failed: ${response.status}`);
+      }
+      
       const xmlText = await response.text();
       
-      if (!xmlText || xmlText.length < 100) {
-        throw new Error('Empty or invalid XML response');
+      if (!xmlText || xmlText.length < 50) {
+        throw new Error('Empty caption response from player data');
       }
-
-      return this.parseTranscriptXML(xmlText);
-
+      
+      const transcript = this.parseTranscriptXML(xmlText);
+      console.log('SuperPlay AI: Successfully extracted from page data, length:', transcript.length);
+      
+      return transcript;
+      
     } catch (error) {
-      throw new Error(`Player API method failed: ${error.message}`);
+      throw new Error(`Page data method failed: ${error.message}`);
     }
   }
 
@@ -162,36 +249,85 @@ export class YouTubeService {
    */
   async fetchFromCaptionTracks(videoId) {
     try {
-      // Look for caption track URLs in page source
-      const pageHTML = document.documentElement.outerHTML;
-      const captionRegex = /"captionTracks":\s*\[([^\]]+)\]/;
-      const match = pageHTML.match(captionRegex);
+      // Wait for page to fully load
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (!match) {
+      // Look for caption track URLs in page source and scripts
+      const pageHTML = document.documentElement.outerHTML;
+      
+      // Multiple regex patterns to find caption tracks
+      const patterns = [
+        /"captionTracks":\s*\[([^\]]+)\]/,
+        /"caption_tracks":\s*\[([^\]]+)\]/,
+        /\"captionTracks\":\[([^\]]+)\]/,
+        /"captions"[^}]*"playerCaptionsTracklistRenderer"[^}]*"captionTracks":\[([^\]]+)\]/
+      ];
+      
+      let captionTracksString = null;
+      
+      for (const pattern of patterns) {
+        const match = pageHTML.match(pattern);
+        if (match) {
+          captionTracksString = match[1];
+          break;
+        }
+      }
+      
+      if (!captionTracksString) {
         throw new Error('No caption tracks found in page');
       }
 
-      const captionTracksString = match[1];
-      const urlRegex = /"baseUrl":"([^"]+)"/;
-      const urlMatch = captionTracksString.match(urlRegex);
+      // Extract caption URL
+      const urlPatterns = [
+        /"baseUrl":"([^"]+)"/,
+        /"url":"([^"]+)"/,
+        /baseUrl['"]\s*:\s*['"]([^'"]+)['"]/
+      ];
       
-      if (!urlMatch) {
+      let captionUrl = null;
+      
+      for (const pattern of urlPatterns) {
+        const urlMatch = captionTracksString.match(pattern);
+        if (urlMatch) {
+          captionUrl = urlMatch[1];
+          break;
+        }
+      }
+      
+      if (!captionUrl) {
         throw new Error('No caption URL found');
       }
 
-      let captionUrl = urlMatch[1].replace(/\\u0026/g, '&');
+      // Clean up URL encoding
+      captionUrl = captionUrl
+        .replace(/\\u0026/g, '&')
+        .replace(/\\u003d/g, '=')
+        .replace(/\\u003f/g, '?')
+        .replace(/\\/g, '');
       
       // Ensure we get the right format
       if (!captionUrl.includes('fmt=')) {
         captionUrl += '&fmt=srv3';
       }
 
-      const response = await fetch(captionUrl);
+      console.log('SuperPlay AI: Fetching from caption URL:', captionUrl.substring(0, 100) + '...');
+
+      const response = await fetch(captionUrl, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'same-origin'
+      });
+      
       if (!response.ok) {
         throw new Error(`Caption fetch failed: ${response.status}`);
       }
 
       const xmlText = await response.text();
+      
+      if (!xmlText || xmlText.length < 50) {
+        throw new Error('Empty caption response');
+      }
+      
       return this.parseTranscriptXML(xmlText);
 
     } catch (error) {
@@ -204,10 +340,40 @@ export class YouTubeService {
    */
   async fetchFromVisibleCaptions() {
     try {
-      // Wait a bit for captions to load
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('SuperPlay AI: Trying to extract from visible captions...');
+      
+      // Wait longer for captions to load
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
-      const captionElements = document.querySelectorAll(YouTubeSelectors.CAPTION_SEGMENTS);
+      // Try multiple selectors for captions
+      const captionSelectors = [
+        '.ytp-caption-segment',
+        '.caption-line',
+        '.ytp-caption-window-container .ytp-caption-segment',
+        '[class*="caption"] [class*="segment"]'
+      ];
+      
+      let captionElements = [];
+      
+      for (const selector of captionSelectors) {
+        captionElements = document.querySelectorAll(selector);
+        if (captionElements.length > 0) {
+          console.log(`SuperPlay AI: Found ${captionElements.length} caption elements with selector: ${selector}`);
+          break;
+        }
+      }
+      
+      if (captionElements.length === 0) {
+        // Try to enable captions programmatically
+        const captionButton = document.querySelector('.ytp-subtitles-button, .ytp-cc-button');
+        if (captionButton && !captionButton.classList.contains('ytp-button-active')) {
+          captionButton.click();
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Try again after enabling
+          captionElements = document.querySelectorAll('.ytp-caption-segment');
+        }
+      }
       
       if (captionElements.length === 0) {
         throw new Error('No visible captions found');
@@ -219,9 +385,10 @@ export class YouTubeService {
         .join(' ');
 
       if (transcript.length < UIConfig.MIN_TRANSCRIPT_LENGTH) {
-        throw new Error('Visible captions too short');
+        throw new Error(`Visible captions too short: ${transcript.length} characters`);
       }
 
+      console.log('SuperPlay AI: Successfully extracted visible captions, length:', transcript.length);
       return transcript;
 
     } catch (error) {
@@ -262,6 +429,52 @@ export class YouTubeService {
 
     } catch (error) {
       throw new Error(`Description method failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Fetch transcript from YouTube's internal player API
+   */
+  async fetchFromPlayerAPI(videoId) {
+    try {
+      // Try different language options
+      const languages = ['en', 'en-US', 'en-GB'];
+      
+      for (const lang of languages) {
+        try {
+          const apiUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}&fmt=srv3`;
+          
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'same-origin',
+            headers: {
+              'Accept': 'application/xml, text/xml, */*',
+              'User-Agent': navigator.userAgent
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`API response not ok: ${response.status}`);
+          }
+
+          const xmlText = await response.text();
+          
+          if (!xmlText || xmlText.length < 100) {
+            throw new Error('Empty or invalid XML response');
+          }
+
+          return this.parseTranscriptXML(xmlText);
+        } catch (langError) {
+          console.log(`SuperPlay AI: Language ${lang} failed:`, langError.message);
+          continue;
+        }
+      }
+      
+      throw new Error('All language variants failed');
+
+    } catch (error) {
+      throw new Error(`Player API method failed: ${error.message}`);
     }
   }
 

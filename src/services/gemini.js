@@ -70,28 +70,43 @@ export class GeminiService {
     
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
+        console.log(`SuperPlay AI: Making Gemini API call (attempt ${attempt}/${retries})`);
+        
+        const requestBody = {
+          contents: [{
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            temperature: this.requestConfig.temperature,
+            topK: this.requestConfig.topK,
+            topP: this.requestConfig.topP,
+            maxOutputTokens: this.requestConfig.maxOutputTokens,
+          },
+          safetySettings: this.requestConfig.safetySettings
+        };
+
+        console.log('SuperPlay AI: Request body prepared, making fetch call...');
+
         const response = await fetch(`${this.baseUrl}?key=${apiKey}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }],
-            generationConfig: {
-              temperature: this.requestConfig.temperature,
-              topK: this.requestConfig.topK,
-              topP: this.requestConfig.topP,
-              maxOutputTokens: this.requestConfig.maxOutputTokens,
-            },
-            safetySettings: this.requestConfig.safetySettings
-          })
+          body: JSON.stringify(requestBody)
         });
+
+        console.log(`SuperPlay AI: Received response with status: ${response.status}`);
 
         // Handle HTTP errors
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch (jsonError) {
+            errorData = { error: { message: 'Failed to parse error response' } };
+          }
+          
+          console.error('SuperPlay AI: API error response:', errorData);
           
           switch (response.status) {
             case 400:
@@ -122,20 +137,26 @@ export class GeminiService {
         }
 
         const data = await response.json();
+        console.log('SuperPlay AI: API response received successfully');
         
         // Validate response structure
         if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+          console.error('SuperPlay AI: Invalid response structure:', data);
           throw new Error('Invalid response format from Gemini API');
         }
 
         const content = data.candidates[0].content.parts[0].text;
         if (!content || typeof content !== 'string') {
+          console.error('SuperPlay AI: Empty or invalid content:', content);
           throw new Error('Empty or invalid response from Gemini API');
         }
 
+        console.log('SuperPlay AI: API call successful, content length:', content.length);
         return content.trim();
 
       } catch (error) {
+        console.error(`SuperPlay AI: API call attempt ${attempt} failed:`, error);
+        
         if (attempt === retries) {
           console.error('SuperPlay AI: Gemini API call failed after all retries:', error);
           throw error;
@@ -159,8 +180,11 @@ export class GeminiService {
    */
   async testConnection() {
     try {
+      console.log('SuperPlay AI: Testing Gemini API connection...');
       const testPrompt = "Respond with exactly: 'Connection successful'";
       const response = await this.callGeminiAPI(testPrompt, 1);
+      
+      console.log('SuperPlay AI: Test response received:', response);
       
       if (response.toLowerCase().includes('connection successful')) {
         return { success: true, message: 'Gemini API connection successful!' };
@@ -168,6 +192,7 @@ export class GeminiService {
         return { success: true, message: 'API responded but with unexpected content. Connection likely works.' };
       }
     } catch (error) {
+      console.error('SuperPlay AI: Connection test failed:', error);
       return { success: false, message: error.message };
     }
   }
