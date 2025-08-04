@@ -418,9 +418,17 @@ export class UIManager {
         videoId,
         videoTitle
       }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('SuperPlay AI: Runtime error getting transcript:', chrome.runtime.lastError);
+          reject(new Error(`Failed to communicate with background script: ${chrome.runtime.lastError.message}`));
+          return;
+        }
+
         if (response && response.success) {
+          console.log('SuperPlay AI: Transcript received successfully, length:', response.transcript?.length);
           resolve(response.transcript);
         } else {
+          console.error('SuperPlay AI: Failed to get transcript:', response?.error);
           reject(new Error(response?.error || 'Failed to get transcript'));
         }
       });
@@ -434,9 +442,16 @@ export class UIManager {
         transcript,
         videoTitle
       }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('SuperPlay AI: Runtime error generating summary:', chrome.runtime.lastError);
+          reject(new Error(`Failed to communicate with background script: ${chrome.runtime.lastError.message}`));
+          return;
+        }
+
         if (response && response.success) {
           resolve({ summary: response.summary, chapters: response.chapters });
         } else {
+          console.error('SuperPlay AI: Failed to generate summary:', response?.error);
           reject(new Error(response?.error || 'Failed to generate summary'));
         }
       });
@@ -450,9 +465,16 @@ export class UIManager {
         transcript,
         videoTitle
       }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('SuperPlay AI: Runtime error generating explanation:', chrome.runtime.lastError);
+          reject(new Error(`Failed to communicate with background script: ${chrome.runtime.lastError.message}`));
+          return;
+        }
+
         if (response && response.success) {
           resolve(response.explanation);
         } else {
+          console.error('SuperPlay AI: Failed to generate explanation:', response?.error);
           reject(new Error(response?.error || 'Failed to generate explanation'));
         }
       });
@@ -468,9 +490,16 @@ export class UIManager {
         transcript,
         videoTitle
       }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('SuperPlay AI: Runtime error asking follow-up:', chrome.runtime.lastError);
+          reject(new Error(`Failed to communicate with background script: ${chrome.runtime.lastError.message}`));
+          return;
+        }
+
         if (response && response.success) {
           resolve(response.answer);
         } else {
+          console.error('SuperPlay AI: Failed to answer question:', response?.error);
           reject(new Error(response?.error || 'Failed to answer question'));
         }
       });

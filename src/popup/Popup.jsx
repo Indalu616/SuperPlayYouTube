@@ -75,10 +75,23 @@ export default function Popup() {
     await saveSettings();
 
     chrome.runtime.sendMessage({ type: MessageTypes.TEST_GEMINI_CONNECTION }, (response) => {
-      if (response) {
-        setTestResult(response);
+      if (chrome.runtime.lastError) {
+        console.error('SuperPlay AI: Runtime error testing connection:', chrome.runtime.lastError);
+        setTestResult({ 
+          success: false, 
+          message: `Failed to communicate with background script: ${chrome.runtime.lastError.message}` 
+        });
+        setTesting(false);
+        return;
+      }
+
+      if (response && response.success) {
+        setTestResult(response.result);
       } else {
-        setTestResult({ success: false, message: 'Failed to test connection' });
+        setTestResult({ 
+          success: false, 
+          message: response?.error || 'Failed to test connection' 
+        });
       }
       setTesting(false);
     });

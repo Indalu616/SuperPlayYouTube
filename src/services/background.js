@@ -45,40 +45,51 @@ class BackgroundService {
   async handleMessage(request, sender, sendResponse) {
     console.log('SuperPlay AI: Message received:', request.type);
 
-    try {
-      switch (request.type) {
-        case MessageTypes.GET_SETTINGS:
-          return this.handleGetSettings(sendResponse);
+    // Always return true to keep message channel open for async operations
+    (async () => {
+      try {
+        switch (request.type) {
+          case MessageTypes.GET_SETTINGS:
+            await this.handleGetSettings(sendResponse);
+            break;
 
-        case MessageTypes.UPDATE_SETTINGS:
-          return this.handleUpdateSettings(request.settings, sendResponse);
+          case MessageTypes.UPDATE_SETTINGS:
+            await this.handleUpdateSettings(request.settings, sendResponse);
+            break;
 
-        case MessageTypes.TEST_GEMINI_CONNECTION:
-          return this.handleTestConnection(sendResponse);
+          case MessageTypes.TEST_GEMINI_CONNECTION:
+            await this.handleTestConnection(sendResponse);
+            break;
 
-        case MessageTypes.GET_VIDEO_TRANSCRIPT:
-          return this.handleGetTranscript(request.videoId, request.videoTitle, sendResponse);
+          case MessageTypes.GET_VIDEO_TRANSCRIPT:
+            await this.handleGetTranscript(request.videoId, request.videoTitle, sendResponse);
+            break;
 
-        case MessageTypes.GENERATE_EXPLANATION:
-          return this.handleGenerateExplanation(request, sendResponse);
+          case MessageTypes.GENERATE_EXPLANATION:
+            await this.handleGenerateExplanation(request, sendResponse);
+            break;
 
-        case MessageTypes.GENERATE_SUMMARY:
-          return this.handleGenerateSummary(request, sendResponse);
+          case MessageTypes.GENERATE_SUMMARY:
+            await this.handleGenerateSummary(request, sendResponse);
+            break;
 
-        case MessageTypes.ASK_FOLLOW_UP_QUESTION:
-          return this.handleFollowUpQuestion(request, sendResponse);
+          case MessageTypes.ASK_FOLLOW_UP_QUESTION:
+            await this.handleFollowUpQuestion(request, sendResponse);
+            break;
 
-        case MessageTypes.GET_VIDEO_INFO:
-          return this.handleGetVideoInfo(request.tabId, sendResponse);
+          case MessageTypes.GET_VIDEO_INFO:
+            await this.handleGetVideoInfo(request.tabId, sendResponse);
+            break;
 
-        default:
-          console.warn('SuperPlay AI: Unknown message type:', request.type);
-          sendResponse({ success: false, error: 'Unknown message type' });
+          default:
+            console.warn('SuperPlay AI: Unknown message type:', request.type);
+            sendResponse({ success: false, error: 'Unknown message type' });
+        }
+      } catch (error) {
+        console.error('SuperPlay AI: Message handler error:', error);
+        sendResponse({ success: false, error: error.message });
       }
-    } catch (error) {
-      console.error('SuperPlay AI: Message handler error:', error);
-      sendResponse({ success: false, error: error.message });
-    }
+    })();
 
     return true; // Keep message channel open for async response
   }
