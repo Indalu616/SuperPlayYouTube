@@ -73,18 +73,18 @@ class ContentScript {
 
         case MessageTypes.FETCH_TRANSCRIPT_FROM_DOM:
           this.handleFetchTranscriptFromDOM(request, sendResponse);
-          break;
+          return true; // Keep message channel open for async response
 
         case MessageTypes.GET_VIDEO_INFO_FROM_DOM:
           this.handleGetVideoInfoFromDOM(sendResponse);
-          break;
+          return true; // Keep message channel open for async response
 
         default:
           console.warn('SuperPlay AI: Unknown message type in content script:', request.type);
           sendResponse({ success: false, error: 'Unknown message type' });
       }
 
-      return true; // Keep message channel open
+      return false; // Don't keep channel open for sync responses
     });
   }
 
@@ -96,6 +96,7 @@ class ContentScript {
       const transcript = await this.youtubeService.fetchTranscript(videoId);
       
       if (!transcript || transcript.length < UIConfig.MIN_TRANSCRIPT_LENGTH) {
+        console.error('SuperPlay AI: Transcript too short or empty:', transcript?.length || 0);
         sendResponse({ 
           success: false, 
           error: 'Could not fetch video transcript. This video may not have captions available.' 
@@ -103,6 +104,7 @@ class ContentScript {
         return;
       }
 
+      console.log('SuperPlay AI: Successfully fetched transcript, length:', transcript.length);
       sendResponse({ success: true, transcript });
 
     } catch (error) {
@@ -114,6 +116,7 @@ class ContentScript {
   async handleGetVideoInfoFromDOM(sendResponse) {
     try {
       const videoInfo = await this.youtubeService.getVideoInfo();
+      console.log('SuperPlay AI: Successfully got video info:', videoInfo);
       sendResponse({ success: true, videoInfo });
     } catch (error) {
       console.error('SuperPlay AI: Failed to get video info from DOM:', error);
